@@ -1,0 +1,17 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.service-key
+repo/
+session.log
+PROMPT.md
+classifier-*-public.jsonl
+gemini-public.jsonl
+manifest*.json
+tuning-v*.json
+heldout-result.json
+heldout.lock
+gauntlet/
+COLLECTION_RECEIPTS.json
+PUBLIC_PROVENANCE.json
