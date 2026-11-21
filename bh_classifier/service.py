@@ -9,6 +9,7 @@ import threading
 from http.server import BaseHTTPRequestHandler
 from socketserver import TCPServer
 
+from . import logkit
 from .policy import FAST_USD_PER_1000, GEMINI_MODEL, estimated_gemini_cost, should_escalate, temper
 from .upstreams import UpstreamError, classifier_fast, gemini_decision
 
@@ -151,7 +152,11 @@ def systemone(payload: dict) -> dict:
             "usage": {"known_cost_usd": total_cost, "estimated_cost_usd": None if cost_unknown else total_cost}}
 
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(logkit.HTTPLogMixin, BaseHTTPRequestHandler):
+    # Structured access lines (logging standard, AGENTS.md); request bodies and query strings are never logged, no IPs.
+    logkit_ip = False
+    logkit_ua = False
+
     server_version = "BHDecision/0.1"
 
     def setup(self):
@@ -212,12 +217,10 @@ class Handler(BaseHTTPRequestHandler):
         finally:
             REQUEST_SLOTS.release()
 
-    def log_message(self, fmt, *args):
-        # Intentionally omit request bodies and query strings.
-        print(f"{self.address_string()} {self.command} {self.path.split('?', 1)[0]} {fmt % args}")
 
 
 def main():
+    logkit.setup(app="benchmark-heaven-decision")
     port = int(os.environ.get("PORT", "8080"))
     workers = int(os.environ.get("MAX_CONCURRENT_REQUESTS", "16"))
     BoundedHTTPServer(("0.0.0.0", port), Handler, workers).serve_forever()
